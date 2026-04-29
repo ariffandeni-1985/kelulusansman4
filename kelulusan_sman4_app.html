@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans,'Arial',sans-serif);min-height:100vh;background:var(--color-background-tertiary)}
+
+/* PUBLIC PAGE */
+#public-page{display:block}
+.pub-header{background:linear-gradient(135deg,#1a3c6e,#2563a8);color:#fff;padding:2rem 1rem;text-align:center;position:relative}
+.pub-logo-wrap{margin-bottom:1rem}
+.pub-logo-wrap img{max-height:90px;max-width:200px;object-fit:contain;border-radius:8px;background:#fff;padding:6px}
+.pub-logo-placeholder{display:inline-flex;align-items:center;justify-content:center;width:90px;height:90px;background:rgba(255,255,255,0.15);border-radius:12px;font-size:13px;color:rgba(255,255,255,0.8);border:2px dashed rgba(255,255,255,0.4)}
+.pub-title{font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:0.5px}
+.pub-subtitle{font-size:14px;opacity:0.85}
+.pub-tahun{font-size:28px;font-weight:800;margin-top:6px;color:#ffd700}
+
+.search-section{background:var(--color-background-primary);padding:1.5rem 1rem;border-bottom:0.5px solid var(--color-border-tertiary)}
+.search-wrap{max-width:600px;margin:0 auto;display:flex;gap:8px}
+.search-wrap input{flex:1;padding:10px 14px;border:1.5px solid var(--color-border-secondary);border-radius:8px;font-size:15px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.search-wrap input:focus{outline:none;border-color:#2563a8}
+.btn-search{padding:10px 20px;background:#2563a8;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500}
+.btn-search:hover{background:#1a4f8a}
+
+.result-section{max-width:600px;margin:1.5rem auto;padding:0 1rem}
+.result-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.result-header{padding:1rem 1.25rem;background:#f0f7ff;border-bottom:0.5px solid var(--color-border-tertiary)}
+.result-header.lulus{background:#e8f5e9}
+.result-header.tidak-lulus{background:#ffebee}
+.result-name{font-size:17px;font-weight:600;color:var(--color-text-primary)}
+.result-nisn{font-size:13px;color:var(--color-text-secondary);margin-top:2px}
+.result-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-top:8px}
+.badge-lulus{background:#c8e6c9;color:#1b5e20}
+.badge-tidak{background:#ffcdd2;color:#b71c1c}
+.result-body{padding:1rem 1.25rem}
+.result-row{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.result-row:last-child{border-bottom:none}
+.result-row .label{color:var(--color-text-secondary)}
+.result-row .value{font-weight:500;color:var(--color-text-primary)}
+
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--color-text-secondary)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-msg{font-size:15px}
+
+.stats-bar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:1rem}
+.stats-inner{max-width:600px;margin:0 auto;display:flex;gap:12px;justify-content:center}
+.stat-item{text-align:center;flex:1;max-width:120px}
+.stat-num{font-size:22px;font-weight:700;color:#2563a8}
+.stat-num.green{color:#2e7d32}
+.stat-num.red{color:#c62828}
+.stat-label{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+
+/* ADMIN PANEL */
+#admin-page{display:none}
+.admin-nav{background:#1a3c6e;color:#fff;padding:0.75rem 1.25rem;display:flex;align-items:center;justify-content:space-between}
+.admin-title{font-size:16px;font-weight:600}
+.admin-tabs{display:flex;gap:0;background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary)}
+.tab-btn{padding:0.8rem 1.25rem;font-size:14px;border:none;background:transparent;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;font-weight:500}
+.tab-btn.active{color:#2563a8;border-bottom-color:#2563a8}
+.admin-body{padding:1.25rem;max-width:700px;margin:0 auto}
+
+.section-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem}
+.section-title{font-size:15px;font-weight:600;color:var(--color-text-primary);margin-bottom:1rem;padding-bottom:8px;border-bottom:0.5px solid var(--color-border-tertiary)}
+
+.form-group{margin-bottom:1rem}
+.form-label{font-size:13px;color:var(--color-text-secondary);margin-bottom:5px;display:block;font-weight:500}
+.form-input{width:100%;padding:9px 12px;border:1.5px solid var(--color-border-secondary);border-radius:8px;font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.form-input:focus{outline:none;border-color:#2563a8}
+
+.upload-zone{border:2px dashed var(--color-border-secondary);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--color-background-secondary)}
+.upload-zone:hover{border-color:#2563a8;background:#f0f7ff}
+.upload-zone input{display:none}
+.upload-icon{font-size:28px;margin-bottom:8px}
+.upload-text{font-size:14px;color:var(--color-text-secondary)}
+.upload-sub{font-size:12px;color:var(--color-text-tertiary);margin-top:4px}
+
+.logo-preview{display:flex;align-items:center;gap:1rem;margin-top:1rem;padding:0.75rem;background:var(--color-background-secondary);border-radius:8px}
+.logo-preview img{max-height:60px;max-width:120px;object-fit:contain;border-radius:6px;background:#fff;padding:4px;border:0.5px solid var(--color-border-tertiary)}
+.logo-name{font-size:13px;color:var(--color-text-secondary)}
+
+.btn-save{background:#2563a8;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500;width:100%;margin-top:8px}
+.btn-save:hover{background:#1a4f8a}
+.btn-save.green{background:#2e7d32}
+.btn-save.green:hover{background:#1b5e20}
+
+.data-table-wrap{overflow-x:auto;margin-top:0.5rem}
+.data-table{width:100%;font-size:13px;border-collapse:collapse}
+.data-table th{background:var(--color-background-secondary);padding:8px 10px;text-align:left;color:var(--color-text-secondary);font-weight:500;border-bottom:0.5px solid var(--color-border-tertiary)}
+.data-table td{padding:8px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+.data-table tr:last-child td{border-bottom:none}
+.badge-l{background:#c8e6c9;color:#1b5e20;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-t{background:#ffcdd2;color:#b71c1c;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.data-count{font-size:13px;color:var(--color-text-secondary);margin-bottom:8px}
+
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-top:8px;display:none}
+.alert.success{background:#c8e6c9;color:#1b5e20;display:block}
+.alert.error{background:#ffcdd2;color:#b71c1c;display:block}
+.alert.info{background:#bbdefb;color:#0d47a1;display:block}
+
+.nav-link{font-size:13px;color:rgba(255,255,255,0.8);cursor:pointer;text-decoration:underline}
+.nav-link:hover{color:#fff}
+
+.pub-admin-btn{position:fixed;bottom:16px;right:16px;background:#1a3c6e;color:#fff;border:none;border-radius:50px;padding:10px 18px;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:999;display:flex;align-items:center;gap:6px}
+.pub-admin-btn:hover{background:#2563a8}
+
+.template-hint{background:#fff8e1;border:0.5px solid #ffe082;border-radius:8px;padding:10px 14px;font-size:13px;color:#795548;margin-bottom:12px}
+
+#login-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-card{background:var(--color-background-primary);border-radius:16px;padding:2rem;width:320px;text-align:center}
+.login-title{font-size:18px;font-weight:600;margin-bottom:4px;color:var(--color-text-primary)}
+.login-sub{font-size:13px;color:var(--color-text-secondary);margin-bottom:1.5rem}
+.login-card input{width:100%;padding:10px 14px;border:1.5px solid var(--color-border-secondary);border-radius:8px;font-size:14px;margin-bottom:10px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.login-card input:focus{outline:none;border-color:#2563a8}
+.btn-login{width:100%;background:#1a3c6e;color:#fff;border:none;padding:11px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600}
+.btn-login:hover{background:#2563a8}
+.login-err{color:#c62828;font-size:13px;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+
+<div id="login-overlay" style="display:none">
+  <div class="login-card">
+    <div class="login-title">Panel Admin</div>
+    <div class="login-sub">Masukkan password admin</div>
+    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">Masuk</button>
+    <div class="login-err" id="login-err">Password salah!</div>
+    <p style="font-size:12px;color:var(--color-text-tertiary);margin-top:1rem;cursor:pointer" onclick="document.getElementById('login-overlay').style.display='none'">Batal</p>
+  </div>
+</div>
+
+<!-- PUBLIC PAGE -->
+<div id="public-page">
+  <div class="pub-header">
+    <div class="pub-logo-wrap" id="pub-logo-area">
+      <div class="pub-logo-placeholder" id="pub-logo-placeholder">LOGO</div>
+    </div>
+    <div class="pub-title" id="pub-sekolah-nama">SMA NEGERI 4 TANJUNG JABUNG BARAT</div>
+    <div class="pub-subtitle" id="pub-sekolah-sub">Pengumuman Kelulusan</div>
+    <div class="pub-tahun" id="pub-tahun-text">TAHUN PELAJARAN 2025/2026</div>
+  </div>
+
+  <div class="stats-bar" id="stats-bar" style="display:none">
+    <div class="stats-inner">
+      <div class="stat-item"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Siswa</div></div>
+      <div class="stat-item"><div class="stat-num green" id="stat-lulus">0</div><div class="stat-label">Lulus</div></div>
+      <div class="stat-item"><div class="stat-num red" id="stat-tidak">0</div><div class="stat-label">Tidak Lulus</div></div>
+    </div>
+  </div>
+
+  <div class="search-section">
+    <div class="search-wrap">
+      <input type="text" id="search-input" placeholder="Cari dengan NISN atau nama siswa..." oninput="searchSiswa()">
+      <button class="btn-search" onclick="searchSiswa()">Cari</button>
+    </div>
+  </div>
+
+  <div class="result-section" id="result-section">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🎓</div>
+      <div class="empty-msg">Masukkan NISN atau nama untuk mencari status kelulusan</div>
+    </div>
+    <div id="result-container"></div>
+  </div>
+
+  <button class="pub-admin-btn" onclick="showAdminLogin()">⚙ Admin</button>
+</div>
+
+<!-- ADMIN PAGE -->
+<div id="admin-page">
+  <div class="admin-nav">
+    <div class="admin-title">⚙ Panel Admin — Pengumuman Kelulusan</div>
+    <span class="nav-link" onclick="showPublic()">← Lihat Halaman Publik</span>
+  </div>
+  <div class="admin-tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-logo',this)">Logo & Info</button>
+    <button class="tab-btn" onclick="switchTab('tab-data',this)">Data Siswa</button>
+    <button class="tab-btn" onclick="switchTab('tab-preview',this)">Preview Data</button>
+  </div>
+  <div class="admin-body">
+
+    <!-- TAB LOGO -->
+    <div id="tab-logo">
+      <div class="section-card">
+        <div class="section-title">Logo Sekolah</div>
+        <label class="upload-zone" for="logo-upload">
+          <input type="file" id="logo-upload" accept="image/*" onchange="handleLogoUpload(event)">
+          <div class="upload-icon">🖼</div>
+          <div class="upload-text">Klik untuk pilih gambar logo</div>
+          <div class="upload-sub">PNG, JPG, SVG (maks. 2MB)</div>
+        </label>
+        <div class="logo-preview" id="logo-preview-area" style="display:none">
+          <img id="logo-preview-img" src="" alt="Logo Preview">
+          <div>
+            <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">Logo berhasil dimuat</div>
+            <div class="logo-name" id="logo-file-name"></div>
+            <button onclick="removeLogo()" style="font-size:12px;color:#c62828;background:none;border:none;cursor:pointer;padding:0;margin-top:4px">Hapus logo</button>
+          </div>
+        </div>
+        <button class="btn-save" onclick="saveLogo()">Simpan Logo</button>
+        <div class="alert" id="alert-logo"></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">Informasi Sekolah</div>
+        <div class="form-group">
+          <label class="form-label">Nama Sekolah</label>
+          <input type="text" class="form-input" id="inp-nama-sekolah" placeholder="SMA NEGERI 4 TANJUNG JABUNG BARAT">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan</label>
+          <input type="text" class="form-input" id="inp-keterangan" placeholder="Pengumuman Kelulusan">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tahun Pelajaran</label>
+          <input type="text" class="form-input" id="inp-tahun" placeholder="2025/2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password Admin</label>
+          <input type="password" class="form-input" id="inp-password" placeholder="Ubah password (isi jika ingin ganti)">
+        </div>
+        <button class="btn-save" onclick="saveInfo()">Simpan Informasi</button>
+        <div class="alert" id="alert-info"></div>
+      </div>
+    </div>
+
+    <!-- TAB DATA -->
+    <div id="tab-data" style="display:none">
+      <div class="section-card">
+        <div class="section-title">Upload Data Siswa (.xlsx)</div>
+        <div class="template-hint">
+          📋 <strong>Format kolom Excel:</strong> NISN | Nama | Jurusan | Kelas | Status (LULUS/TIDAK LULUS)<br>
+          <span style="margin-top:4px;display:block">Kolom wajib: <strong>NISN</strong>, <strong>Nama</strong>, <strong>Status</strong></span>
+        </div>
+        <label class="upload-zone" for="xlsx-upload">
+          <input type="file" id="xlsx-upload" accept=".xlsx,.xls" onchange="handleXlsxUpload(event)">
+          <div class="upload-icon">📊</div>
+          <div class="upload-text">Klik untuk pilih file Excel (.xlsx)</div>
+          <div class="upload-sub">Format: NISN | Nama | Jurusan | Kelas | Status</div>
+        </label>
+        <button class="btn-save green" onclick="saveData()" style="margin-top:12px">Simpan & Publish Data</button>
+        <div class="alert" id="alert-data"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-title">Download Template Excel</div>
+        <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px">Unduh template Excel yang sudah sesuai format, isi data, lalu upload kembali.</p>
+        <button class="btn-save" style="background:#455a64" onclick="downloadTemplate()">⬇ Download Template .xlsx</button>
+      </div>
+    </div>
+
+    <!-- TAB PREVIEW -->
+    <div id="tab-preview" style="display:none">
+      <div class="section-card">
+        <div class="section-title">Preview Data Siswa</div>
+        <div id="preview-empty" class="empty-state" style="padding:2rem 0">
+          <div class="empty-icon">📂</div>
+          <div class="empty-msg">Belum ada data. Upload file .xlsx di tab Data Siswa.</div>
+        </div>
+        <div id="preview-content" style="display:none">
+          <div class="data-count" id="data-count-label"></div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>No</th><th>NISN</th><th>Nama</th><th>Jurusan</th><th>Kelas</th><th>Status</th></tr></thead>
+              <tbody id="preview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY_DATA = 'kelulusan_siswa_data';
+const STORAGE_KEY_INFO = 'kelulusan_info';
+const STORAGE_KEY_LOGO = 'kelulusan_logo';
+const DEFAULT_PASS = 'admin123';
+
+let tempLogoData = null;
+let tempStudents = [];
+
+async function loadFromStorage(){
+  try{
+    const r1 = await window.storage.get(STORAGE_KEY_INFO,true);
+    if(r1){const info=JSON.parse(r1.value);applyInfo(info);}
+    const r2 = await window.storage.get(STORAGE_KEY_LOGO,true);
+    if(r2&&r2.value){applyLogo(r2.value);}
+    const r3 = await window.storage.get(STORAGE_KEY_DATA,true);
+    if(r3){
+      const students=JSON.parse(r3.value);
+      tempStudents=students;
+      updateStatsBar(students);
+    }
+  }catch(e){}
+}
+
+function applyInfo(info){
+  if(info.namaSekolah){document.getElementById('pub-sekolah-nama').textContent=info.namaSekolah;document.getElementById('inp-nama-sekolah').value=info.namaSekolah;}
+  if(info.keterangan){document.getElementById('pub-sekolah-sub').textContent=info.keterangan;document.getElementById('inp-keterangan').value=info.keterangan;}
+  if(info.tahun){document.getElementById('pub-tahun-text').textContent='TAHUN PELAJARAN '+info.tahun;document.getElementById('inp-tahun').value=info.tahun;}
+}
+
+function applyLogo(dataUrl){
+  const area=document.getElementById('pub-logo-area');
+  document.getElementById('pub-logo-placeholder').style.display='none';
+  let img=document.getElementById('pub-logo-img');
+  if(!img){img=document.createElement('img');img.id='pub-logo-img';area.appendChild(img);}
+  img.src=dataUrl;img.style.display='';
+  tempLogoData=dataUrl;
+  const prev=document.getElementById('logo-preview-area');
+  document.getElementById('logo-preview-img').src=dataUrl;
+  prev.style.display='flex';
+}
+
+function removeLogo(){
+  tempLogoData=null;
+  document.getElementById('logo-preview-area').style.display='none';
+  document.getElementById('pub-logo-placeholder').style.display='';
+  const img=document.getElementById('pub-logo-img');
+  if(img)img.style.display='none';
+}
+
+function handleLogoUpload(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){showAlert('alert-logo','File terlalu besar (maks 2MB)','error');return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    tempLogoData=ev.target.result;
+    document.getElementById('logo-preview-img').src=tempLogoData;
+    document.getElementById('logo-file-name').textContent=file.name;
+    document.getElementById('logo-preview-area').style.display='flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveLogo(){
+  if(!tempLogoData){showAlert('alert-logo','Pilih gambar logo terlebih dahulu','error');return;}
+  try{
+    await window.storage.set(STORAGE_KEY_LOGO,tempLogoData,true);
+    applyLogo(tempLogoData);
+    showAlert('alert-logo','Logo berhasil disimpan dan terlihat di halaman publik!','success');
+  }catch(e){showAlert('alert-logo','Gagal menyimpan: '+e.message,'error');}
+}
+
+async function saveInfo(){
+  const info={
+    namaSekolah:document.getElementById('inp-nama-sekolah').value||'SMA NEGERI 4 TANJUNG JABUNG BARAT',
+    keterangan:document.getElementById('inp-keterangan').value||'Pengumuman Kelulusan',
+    tahun:document.getElementById('inp-tahun').value||'2025/2026',
+  };
+  const newPass=document.getElementById('inp-password').value;
+  if(newPass){info.password=newPass;}
+  try{
+    await window.storage.set(STORAGE_KEY_INFO,JSON.stringify(info),true);
+    applyInfo(info);
+    showAlert('alert-info','Informasi berhasil disimpan!','success');
+    document.getElementById('inp-password').value='';
+  }catch(e){showAlert('alert-info','Gagal menyimpan: '+e.message,'error');}
+}
+
+function handleXlsxUpload(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(rows.length<2){showAlert('alert-data','File kosong atau tidak ada data','error');return;}
+      const header=rows[0].map(h=>(h||'').toString().toLowerCase().trim());
+      const nisnIdx=findCol(header,['nisn']);
+      const namaIdx=findCol(header,['nama','name']);
+      const statusIdx=findCol(header,['status']);
+      const jurusanIdx=findCol(header,['jurusan','program','kompetensi']);
+      const kelasIdx=findCol(header,['kelas','class']);
+      if(nisnIdx<0||namaIdx<0||statusIdx<0){
+        showAlert('alert-data','Kolom wajib tidak ditemukan. Pastikan ada kolom: NISN, Nama, Status','error');return;
+      }
+      tempStudents=[];
+      for(let i=1;i<rows.length;i++){
+        const row=rows[i];
+        const nisn=String(row[nisnIdx]||'').trim();
+        const nama=String(row[namaIdx]||'').trim();
+        const status=String(row[statusIdx]||'').trim().toUpperCase();
+        if(!nisn&&!nama)continue;
+        tempStudents.push({
+          nisn,nama,
+          jurusan:jurusanIdx>=0?String(row[jurusanIdx]||'').trim():'',
+          kelas:kelasIdx>=0?String(row[kelasIdx]||'').trim():'',
+          status:status.includes('TIDAK')?'TIDAK LULUS':'LULUS'
+        });
+      }
+      showAlert('alert-data',`✓ ${tempStudents.length} data siswa berhasil dibaca dari Excel. Klik "Simpan & Publish Data" untuk menyimpan.`,'info');
+      renderPreview();
+      updateStatsBar(tempStudents);
+    }catch(err){showAlert('alert-data','Gagal membaca file: '+err.message,'error');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function findCol(header,keywords){
+  for(let k of keywords){const i=header.findIndex(h=>h.includes(k));if(i>=0)return i;}
+  return -1;
+}
+
+async function saveData(){
+  if(!tempStudents||tempStudents.length===0){showAlert('alert-data','Belum ada data. Upload file .xlsx dulu.','error');return;}
+  try{
+    await window.storage.set(STORAGE_KEY_DATA,JSON.stringify(tempStudents),true);
+    showAlert('alert-data',`✓ ${tempStudents.length} data berhasil disimpan dan dipublikasikan!`,'success');
+    updateStatsBar(tempStudents);
+  }catch(e){showAlert('alert-data','Gagal menyimpan: '+e.message,'error');}
+}
+
+function renderPreview(){
+  if(!tempStudents||tempStudents.length===0){
+    document.getElementById('preview-empty').style.display='block';
+    document.getElementById('preview-content').style.display='none';
+    return;
+  }
+  document.getElementById('preview-empty').style.display='none';
+  document.getElementById('preview-content').style.display='block';
+  const lulus=tempStudents.filter(s=>s.status==='LULUS').length;
+  document.getElementById('data-count-label').textContent=`Total: ${tempStudents.length} siswa | Lulus: ${lulus} | Tidak Lulus: ${tempStudents.length-lulus}`;
+  const tbody=document.getElementById('preview-tbody');
+  tbody.innerHTML=tempStudents.slice(0,100).map((s,i)=>`
+    <tr>
+      <td style="color:var(--color-text-secondary)">${i+1}</td>
+      <td>${s.nisn}</td>
+      <td style="font-weight:500">${s.nama}</td>
+      <td>${s.jurusan}</td>
+      <td>${s.kelas}</td>
+      <td><span class="${s.status==='LULUS'?'badge-l':'badge-t'}">${s.status}</span></td>
+    </tr>`).join('');
+  if(tempStudents.length>100){tbody.innerHTML+=`<tr><td colspan="6" style="text-align:center;color:var(--color-text-secondary);font-size:12px;padding:8px">...dan ${tempStudents.length-100} data lainnya</td></tr>`;}
+}
+
+function updateStatsBar(students){
+  if(!students||students.length===0){document.getElementById('stats-bar').style.display='none';return;}
+  document.getElementById('stats-bar').style.display='block';
+  document.getElementById('stat-total').textContent=students.length;
+  const lulus=students.filter(s=>s.status==='LULUS').length;
+  document.getElementById('stat-lulus').textContent=lulus;
+  document.getElementById('stat-tidak').textContent=students.length-lulus;
+}
+
+function searchSiswa(){
+  const q=document.getElementById('search-input').value.toLowerCase().trim();
+  const container=document.getElementById('result-container');
+  const empty=document.getElementById('empty-state');
+  if(!q){container.innerHTML='';empty.style.display='block';return;}
+  if(!tempStudents||tempStudents.length===0){
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-msg">Belum ada data siswa. Hubungi admin sekolah.</div></div>';
+    empty.style.display='none';return;
+  }
+  const found=tempStudents.filter(s=>s.nisn.toLowerCase().includes(q)||s.nama.toLowerCase().includes(q));
+  empty.style.display='none';
+  if(found.length===0){
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-msg">Siswa tidak ditemukan. Coba dengan NISN atau nama lengkap.</div></div>';
+    return;
+  }
+  container.innerHTML=found.slice(0,5).map(s=>`
+    <div class="result-card">
+      <div class="result-header ${s.status==='LULUS'?'lulus':'tidak-lulus'}">
+        <div class="result-name">${s.nama}</div>
+        <div class="result-nisn">NISN: ${s.nisn}</div>
+        <span class="result-badge ${s.status==='LULUS'?'badge-lulus':'badge-tidak'}">${s.status}</span>
+      </div>
+      <div class="result-body">
+        ${s.jurusan?`<div class="result-row"><span class="label">Jurusan</span><span class="value">${s.jurusan}</span></div>`:''}
+        ${s.kelas?`<div class="result-row"><span class="label">Kelas</span><span class="value">${s.kelas}</span></div>`:''}
+        <div class="result-row"><span class="label">Status Kelulusan</span><span class="value" style="color:${s.status==='LULUS'?'#2e7d32':'#c62828'};font-weight:700">${s.status}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function downloadTemplate(){
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['NISN','Nama','Jurusan','Kelas','Status'],
+    ['1234567890','AHMAD FAUZI','IPA','XII IPA 1','LULUS'],
+    ['0987654321','SITI RAHAYU','IPS','XII IPS 2','LULUS'],
+    ['1122334455','BUDI SANTOSO','BAHASA','XII BHS 1','TIDAK LULUS'],
+  ]);
+  ws['!cols']=[{wch:14},{wch:30},{wch:15},{wch:12},{wch:15}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Data Siswa');
+  XLSX.writeFile(wb,'template_kelulusan.xlsx');
+}
+
+function showAlert(id,msg,type){
+  const el=document.getElementById(id);
+  el.textContent=msg;el.className='alert '+type;
+  setTimeout(()=>{el.className='alert';},5000);
+}
+
+function switchTab(id,btn){
+  ['tab-logo','tab-data','tab-preview'].forEach(t=>document.getElementById(t).style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).style.display='block';
+  btn.classList.add('active');
+  if(id==='tab-preview')renderPreview();
+}
+
+async function getAdminPassword(){
+  try{
+    const r=await window.storage.get(STORAGE_KEY_INFO,true);
+    if(r){const info=JSON.parse(r.value);if(info.password)return info.password;}
+  }catch(e){}
+  return DEFAULT_PASS;
+}
+
+async function doLogin(){
+  const pw=document.getElementById('pw-input').value;
+  const correct=await getAdminPassword();
+  if(pw===correct){
+    document.getElementById('login-overlay').style.display='none';
+    document.getElementById('pw-input').value='';
+    document.getElementById('login-err').style.display='none';
+    showAdmin();
+  }else{
+    document.getElementById('login-err').style.display='block';
+  }
+}
+
+function showAdminLogin(){
+  document.getElementById('login-overlay').style.display='flex';
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
+
+function showAdmin(){
+  document.getElementById('public-page').style.display='none';
+  document.getElementById('admin-page').style.display='block';
+}
+
+function showPublic(){
+  document.getElementById('admin-page').style.display='none';
+  document.getElementById('public-page').style.display='block';
+}
+
+loadFromStorage();
+</script>
+</body>
+</html>
